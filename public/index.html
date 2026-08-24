@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABXCB Tool</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background:
+                radial-gradient(circle at top, #3b0000 0%, #120000 35%, #050505 75%);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 420px;
+            max-width: 92%;
+        }
+
+        .card {
+            background: rgba(15, 15, 15, .95);
+            border: 1px solid #5b1111;
+            border-radius: 18px;
+            padding: 30px;
+            box-shadow: 0 0 35px rgba(255, 0, 0, .18);
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 34px;
+            font-weight: 900;
+            color: #ff3030;
+            letter-spacing: 4px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin: 8px 0 28px;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 7px;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            border-radius: 9px;
+            border: 1px solid #333;
+            background: #080808;
+            color: white;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #e22;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 20px;
+            border: 0;
+            border-radius: 9px;
+            background: #d71919;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #f02020;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .status {
+            margin-top: 18px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #111;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .warning {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #241500;
+            border: 1px solid #704500;
+            color: #ffca70;
+            font-size: 13px;
+        }
+
+        .logout {
+            background: #292929;
+        }
+
+        .logout:hover {
+            background: #3a3a3a;
+        }
+
+        .result {
+            margin-top: 18px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #080808;
+            border: 1px solid #292929;
+            white-space: pre-line;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- LOGIN -->
+    <div class="card" id="loginCard">
+        <div class="logo">ABXCB</div>
+        <div class="subtitle">ABXCB Tool Panel</div>
+
+        <label>Username</label>
+        <input id="username" type="text" placeholder="Username">
+
+        <label>Password</label>
+        <input id="password" type="password" placeholder="Password">
+
+        <button onclick="login()">LOGIN</button>
+
+        <div class="status" id="loginStatus">
+            Enter your credentials.
+        </div>
+    </div>
+
+    <!-- PANEL -->
+    <div class="card hidden" id="panelCard">
+
+        <div class="logo">ABXCB</div>
+        <div class="subtitle">Control Panel</div>
+
+        <label>Test Number</label>
+        <input id="number" type="text" placeholder="09123456789">
+
+        <label>Test Amount</label>
+        <input id="amount" type="number" min="1" max="10" value="1">
+
+        <button onclick="runTest()">RUN LOCAL TEST</button>
+
+        <div class="result" id="result">
+            Waiting for test...
+        </div>
+
+        <div class="warning">
+            LOCAL TEST MODE — no real SMS or calls are sent.
+        </div>
+
+        <button class="logout" onclick="logout()">LOGOUT</button>
+    </div>
+
+</div>
+
+<script>
+async function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    const status = document.getElementById("loginStatus");
+
+    status.textContent = "Logging in...";
+
+    try {
+        const response = await fetch("/api/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username,
+                password
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            status.textContent = data.message || "Login failed.";
+            return;
+        }
+
+        document.getElementById("loginCard").classList.add("hidden");
+        document.getElementById("panelCard").classList.remove("hidden");
+
+    } catch (error) {
+        status.textContent = "Server connection failed.";
+    }
+}
+
+async function runTest() {
+    const number = document.getElementById("number").value;
+    const amount = document.getElementById("amount").value;
+    const result = document.getElementById("result");
+
+    result.textContent = "Running local test...";
+
+    try {
+        const response = await fetch("/api/test", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                number,
+                amount
+            })
+        });
+
+        const data = await response.json();
+
+        result.textContent =
+            data.message ||
+            "Test completed.";
+
+    } catch (error) {
+        result.textContent = "Unable to connect to server.";
+    }
+}
+
+function logout() {
+    document.getElementById("panelCard").classList.add("hidden");
+    document.getElementById("loginCard").classList.remove("hidden");
+
+    document.getElementById("username").value = "";
+    document.getElementById("password").value = "";
+}
+</script>
+
+</body>
+</html>
